@@ -1,0 +1,8 @@
+# sysinfo.ke - sample Hacker script
+# Run with:  h sysinfo.ke
+import platform
+import os
+print("System :", platform.system(), platform.release())
+print("Machine:", platform.machine())
+print("Python :", platform.python_version())
+print("CWD    :", os.getcwd())

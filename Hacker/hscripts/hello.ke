@@ -1,0 +1,4 @@
+# hello.ke - sample Hacker script
+# Run with:  h hello.ke   (or double-click it)
+print("Hello from Hacker Terminal!")
+print("This is a Hacker native .ke script.")
