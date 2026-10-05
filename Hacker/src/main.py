@@ -38,7 +38,14 @@ def _elevate():
     sys.exit(0)
 
 
-_elevate()
+if "--guard" not in sys.argv:
+    _elevate()
+
+if "--guard" in sys.argv:
+    import guardd
+    guardd.run()
+    sys.exit(0)
+
 import core
 
 SCRIPT_FILE = ""

@@ -834,7 +834,7 @@ def ren(arguments):
 
 
 @register("open", "Open a path with its default application")
-def open(arguments):
+def cmd_open(arguments):
     if not arguments.strip():
         print("Usage: open <path>")
         return
@@ -2203,9 +2203,17 @@ def _mem_info():
 
 
 def _run_cap(cmd):
-    """Run a system command, capture stdout as text (tolerate GBK/UTF-8)."""
+    """Run a system command, capture stdout as text (tolerate GBK/UTF-8).
+
+    Launched with CREATE_NO_WINDOW so helper processes run silently in the
+    background (task manager only) instead of flashing a console window.
+    """
     try:
-        r = subprocess.run(cmd, capture_output=True, timeout=25)
+        kwargs = {"capture_output": True, "timeout": 25}
+        if sys.platform == "win32":
+            kwargs["creationflags"] = getattr(subprocess,
+                                              "CREATE_NO_WINDOW", 0)
+        r = subprocess.run(cmd, **kwargs)
         raw = r.stdout
         for encoding in ("utf-8", "gbk"):
             try:
@@ -3166,5 +3174,493 @@ def cmd_defender(arguments):
         if line and ":" in line:
             key, value = line.split(":", 1)
             print(f"  {key.strip():<32} {value.strip()}")
+
+
+@register("vulnscan", "Passive web security check (authorized targets only) - vulnscan <url>")
+def vulnscan(arguments):
+    """Passive, non-intrusive web security check.
+
+    Sends the same kind of requests a normal browser makes (single GET +
+    robots.txt) and reports missing security headers / weak cookie flags /
+    TLS certificate issues. It does NOT probe, brute-force or exploit
+    anything, so it is safe to run against sites you own or are authorized
+    to test.
+    """
+    url = arguments.strip()
+    if not url:
+        print("Usage: vulnscan <url>")
+        print("  e.g. vulnscan https://example.com")
+        print("Passive check: security headers, cookies, TLS, robots.txt.")
+        print("Run it only against sites you own or are authorized to test.")
+        return
+    if not url.startswith(("http://", "https://")):
+        url = "http://" + url
+    host = urllib.parse.urlparse(url).netloc
+
+    try:
+        req = urllib.request.Request(
+            url,
+            headers={"User-Agent": ("Mozilla/5.0 (Windows NT 10.0; Win64; x64) "
+                                    "HackerTool/2.0")})
+        with urllib.request.urlopen(req, timeout=12) as resp:
+            status = resp.status
+            headers = {k.lower(): v for k, v in resp.headers.items()}
+            set_cookie = resp.headers.get("Set-Cookie")
+            body = resp.read(1500).decode("utf-8", "replace")
+    except Exception as error:
+        print(f"Could not reach {url}: {error}")
+        return
+
+    print(f"Target : {url}")
+    print(f"Status : {status}")
+    server = headers.get("server", "?")
+    print(f"Server : {server}")
+
+    # --- security headers ---
+    checks = [
+        ("strict-transport-security", "HSTS not set - add: Strict-Transport-Security: max-age=31536000"),
+        ("content-security-policy", "CSP not set - add a Content-Security-Policy header"),
+        ("x-frame-options", "Clickjacking risk - add: X-Frame-Options: DENY (or SAMEORIGIN)"),
+        ("x-content-type-options", "MIME sniffing risk - add: X-Content-Type-Options: nosniff"),
+        ("referrer-policy", "Referrer leakage - add: Referrer-Policy: strict-origin-when-cross-origin"),
+        ("permissions-policy", "Permissions-Policy not set (optional hardening)"),
+        ("x-xss-protection", "X-XSS-Protection not set (deprecated but common hardening)"),
+    ]
+    print("\nSecurity headers:")
+    for name, advice in checks:
+        if name in headers:
+            print(f"  [OK]      {name}")
+        else:
+            print(f"  [MISSING] {name}  -- {advice}")
+
+    # --- cookies ---
+    print("\nCookies:")
+    if set_cookie:
+        for cookie in set_cookie.split(","):
+            cookie = cookie.strip()
+            if not cookie:
+                continue
+            flags = "HttpOnly" if "httponly" in cookie.lower() else "no-HttpOnly"
+            secure = "Secure" if "secure" in cookie.lower() else "no-Secure"
+            print(f"  {cookie.split('=')[0]}  [{flags}] [{secure}]")
+    else:
+        print("  (no cookies set)")
+
+    # --- TLS certificate (https only) ---
+    if url.lower().startswith("https://"):
+        try:
+            import socket as _sock
+            import ssl as _ssl
+            ctx = _ssl.create_default_context()
+            with _sock.create_connection((host, 443), timeout=10) as sock:
+                with ctx.wrap_socket(sock, server_hostname=host) as tls:
+                    cert = tls.getpeercert()
+                    if cert:
+                        not_after = cert.get("notAfter", "?")
+                        not_before = cert.get("notBefore", "?")
+                        issuer = dict(x[0] for x in cert.get("issuer", []))
+                        print(f"\nTLS certificate: valid {not_before} -> {not_after}")
+                        print(f"  Issuer: {issuer.get('organizationName', '?')}")
+                    else:
+                        print("\nTLS certificate: (none presented)")
+        except Exception as error:
+            print(f"\nTLS check failed: {error}")
+
+    # --- robots.txt (public file, normal browser fetch) ---
+    try:
+        parts = urllib.parse.urlparse(url)
+        root = f"{parts.scheme}://{parts.netloc}/robots.txt"
+        req2 = urllib.request.Request(
+            root,
+            headers={"User-Agent": ("Mozilla/5.0 (Windows NT 10.0; Win64; x64) "
+                                    "HackerTool/2.0")})
+        with urllib.request.urlopen(req2, timeout=10) as r:
+            robots = r.read(2000).decode("utf-8", "replace")
+        print("\nrobots.txt: found")
+        for line in robots.splitlines()[:8]:
+            if line.strip():
+                print(f"  {line.strip()}")
+    except Exception:
+        print("\nrobots.txt: none (or blocked)")
+
+    # --- active path probe (authorized targets / lab ranges only) ---
+    print("")
+    print("Active path probe: enumerates common sensitive paths (status codes")
+    print("only, no payloads, no content read). This is the recon level used")
+    print("on lab ranges such as DVWA, WebGoat or Pikachu.")
+    confirm = input("  Run path probe? Only on targets you own or are "
+                    "authorized to test [y/N]: ")
+    if confirm.strip().lower().startswith("y"):
+        probe_paths = [
+            "/admin", "/admin/", "/administrator", "/login", "/login.php",
+            "/wp-login.php", "/wp-admin/", "/phpmyadmin/", "/phpinfo.php",
+            "/info.php", "/test.php", "/config.php", "/config.inc.php",
+            "/.git/HEAD", "/.git/config", "/.env", "/.htaccess",
+            "/backup", "/backup.zip", "/backup.tar.gz", "/db.sql",
+            "/database.sql", "/dump.sql", "/server-status", "/status",
+            "/upload", "/uploads/", "/api", "/api/v1", "/swagger/",
+            "/docs", "/readme.md", "/crossdomain.xml", "/web.config",
+        ]
+        parts = urllib.parse.urlparse(url)
+        base = f"{parts.scheme}://{parts.netloc}"
+        print(f"\nProbing {len(probe_paths)} paths on {host} ...")
+        found = []
+        gated = []
+        for path in probe_paths:
+            try:
+                req3 = urllib.request.Request(
+                    base + path,
+                    headers={"User-Agent": ("Mozilla/5.0 (Windows NT 10.0; "
+                                            "Win64; x64) HackerTool/2.0")})
+                with urllib.request.urlopen(req3, timeout=5) as resp3:
+                    code = resp3.status
+            except urllib.error.HTTPError as err:
+                code = err.code
+            except Exception:
+                code = 0
+            if code in (200, 301, 302, 307, 308):
+                found.append((path, code))
+                print(f"  [FOUND] {code} {path}")
+            elif code in (401, 403):
+                gated.append((path, code))
+                print(f"  [GATED] {code} {path}  (exists, needs auth)")
+        print("")
+        if found:
+            print("Sensitive paths found - inspect these on your lab target:")
+            for path, code in found:
+                print(f"  {code} {path}")
+        if gated:
+            print("Gated paths (present but auth-protected):")
+            for path, code in gated:
+                print(f"  {code} {path}")
+        if not found and not gated:
+            print("No sensitive paths answered - target looks well configured")
+            print("(or the paths are filtered).")
+
+    print("\nCheck complete. Fix the [MISSING] items to harden the site.")
+    print("Run this only against sites you own or are authorized to test.")
+
+
+@register("pagelinks", "Analyze a page: links, forms, redirects (authorized targets) - pagelinks <url>")
+def pagelinks(arguments):
+    """Single-page structure analysis.
+
+    Fetches one page (like a normal browser) and lists its internal links,
+    forms with their fields, redirects and external resources. It does NOT
+    crawl recursively and does not submit or inject anything, so it stays
+    at recon level - safe for lab ranges and sites you are authorized to
+    test. Pages found here can each be checked with 'vulnscan'.
+    """
+    import html.parser as _hp
+
+    url = arguments.strip()
+    if not url:
+        print("Usage: pagelinks <url>")
+        print("  e.g. pagelinks https://example.com")
+        print("Single-page analysis: links, forms, redirects, resources.")
+        print("Run it only against sites you own or are authorized to test.")
+        return
+    if not url.startswith(("http://", "https://")):
+        url = "http://" + url
+    parts = urllib.parse.urlparse(url)
+    host = parts.netloc
+    ua = ("Mozilla/5.0 (Windows NT 10.0; Win64; x64) HackerTool/2.0")
+
+    # stop at 3xx so the redirect chain is visible instead of followed
+    class _StopRedirect(urllib.request.HTTPRedirectHandler):
+        def redirect_request(self, req, fp, code, msg, headers, newurl):
+            return None
+
+    try:
+        req = urllib.request.Request(url, headers={"User-Agent": ua})
+        opener = urllib.request.build_opener(_StopRedirect)
+        resp = opener.open(req, timeout=12)
+        code = resp.status
+        if code in (301, 302, 303, 307, 308):
+            loc = resp.headers.get("Location", "?")
+            print(f"Target : {url}")
+            print(f"Redirect {code} -> {loc}")
+            print("Follow it with: pagelinks " + loc)
+            return
+        charset = resp.headers.get_content_charset() or "utf-8"
+        raw = resp.read(120000)
+        try:
+            body = raw.decode(charset, "replace")
+        except Exception:
+            body = raw.decode("utf-8", "replace")
+    except urllib.error.HTTPError as err:
+        code = err.code
+        if code in (301, 302, 303, 307, 308):
+            loc = err.headers.get("Location", "?")
+            print(f"Target : {url}")
+            print(f"Redirect {code} -> {loc}")
+            print("Follow it with: pagelinks " + loc)
+            return
+        print(f"Target : {url}")
+        print(f"HTTP {code} - page not reachable for analysis.")
+        return
+    except Exception as error:
+        print(f"Could not reach {url}: {error}")
+        return
+
+    class _Parser(_hp.HTMLParser):
+        def __init__(self):
+            super().__init__()
+            self.links = []
+            self.forms = []
+            self.iframes = []
+            self.scripts = []
+            self.meta_refresh = None
+            self._form = None
+
+        def handle_starttag(self, tag, attrs):
+            d = dict(attrs)
+            if tag == "a" and d.get("href"):
+                self.links.append(d["href"])
+            elif tag == "form":
+                self._form = {"action": d.get("action", ""),
+                              "method": d.get("method", "GET").upper(),
+                              "fields": []}
+            elif tag == "input" and self._form is not None:
+                if d.get("type", "text") not in ("hidden", "submit",
+                                                 "button", "image"):
+                    self._form["fields"].append(d.get("name") or d.get("id"))
+            elif tag == "select" and self._form is not None:
+                self._form["fields"].append(d.get("name") or d.get("id"))
+            elif tag == "textarea" and self._form is not None:
+                self._form["fields"].append(d.get("name") or d.get("id"))
+            elif tag == "iframe" and d.get("src"):
+                self.iframes.append(d["src"])
+            elif tag == "script" and d.get("src"):
+                self.scripts.append(d["src"])
+            elif tag == "meta":
+                if (d.get("http-equiv", "").lower() == "refresh"
+                        and d.get("content")):
+                    self.meta_refresh = d["content"]
+
+        def handle_endtag(self, tag):
+            if tag == "form" and self._form is not None:
+                self.forms.append(self._form)
+                self._form = None
+
+    parser = _Parser()
+    parser.feed(body)
+    parser.close()
+
+    print(f"Target : {url}")
+    print(f"Status : {code}  (page size {len(raw)} bytes)")
+
+    internal = []
+    external_hosts = set()
+    for href in parser.links:
+        href = href.strip()
+        if not href or href.startswith(("#", "mailto:", "tel:",
+                                        "javascript:", "data:")):
+            continue
+        absolute = urllib.parse.urljoin(url, href)
+        link_host = urllib.parse.urlparse(absolute).netloc
+        if link_host == host:
+            path = urllib.parse.urlparse(absolute).path
+            if path and path not in internal:
+                internal.append(path)
+        else:
+            external_hosts.add(link_host)
+
+    print(f"\nInternal pages linked ({len(internal)} unique):")
+    if internal:
+        for path in sorted(internal):
+            print(f"  {path}")
+    else:
+        print("  (none)")
+
+    print(f"\nExternal hosts referenced ({len(external_hosts)}):")
+    if external_hosts:
+        print("  " + ", ".join(sorted(external_hosts)))
+    else:
+        print("  (none)")
+
+    print(f"\nForms ({len(parser.forms)}):")
+    if parser.forms:
+        for form in parser.forms:
+            action = form["action"] or "(same page)"
+            print(f"  {form['method']} {action}")
+            if form["fields"]:
+                print("    fields: " + ", ".join(f for f in form["fields"] if f))
+    else:
+        print("  (none)")
+
+    if parser.meta_refresh:
+        print(f"\nMeta refresh: {parser.meta_refresh}")
+    if parser.iframes:
+        print(f"\nIframes ({len(parser.iframes)}):")
+        for src in parser.iframes:
+            print(f"  {src}")
+    if parser.scripts:
+        print(f"\nScripts ({len(parser.scripts)}):")
+        for src in parser.scripts[:15]:
+            print(f"  {src}")
+        if len(parser.scripts) > 15:
+            print(f"  ... and {len(parser.scripts) - 15} more")
+
+    print("\nSingle-page analysis complete (no recursive crawling).")
+    print("Next: run 'vulnscan <url>' or 'pagelinks <url>' on any page above")
+    print("you own or are authorized to test.")
+
+
+def _pid_alive(pid):
+    """Check whether a Windows process with the given PID is running."""
+    try:
+        out = subprocess.run(["tasklist", "/FI", f"PID eq {pid}"],
+                             capture_output=True, text=True, timeout=10).stdout
+        return str(pid) in out
+    except Exception:
+        return False
+
+
+def _guard_program(guard_mode):
+    """Build the program tuple used to (re)launch Hacker."""
+    if getattr(sys, "frozen", False):
+        return [sys.executable] + (["--guard"] if guard_mode else [])
+    main_path = os.path.join(os.path.dirname(os.path.abspath(__file__)),
+                             "main.py")
+    return [sys.executable, main_path] + (["--guard"] if guard_mode else [])
+
+
+@register("guard", "Background guard daemon - guard <on|off|open|status>")
+def cmd_guard(arguments):
+    import guardd
+
+    args = arguments.strip().lower().split()
+    if not args:
+        print("Usage: guard <on|off|open|status>")
+        print("  on     - start the background guard, terminal may be closed")
+        print("  off    - stop the background guard for good")
+        print("  open   - open a new terminal (guard keeps running)")
+        print("  status - show background guard state + protection snapshot")
+        return
+    action = args[0]
+    state = guardd._read_state()
+
+    if action == "on":
+        if state and _pid_alive(state.get("pid", -1)):
+            print(f"Guard already running (PID {state['pid']}).")
+            print("Use 'guard status' to view state, 'guard open' for a new")
+            print("terminal, 'guard off' to stop it.")
+            return
+        try:
+            os.remove(guardd.STOP_FILE)
+        except OSError:
+            pass
+        subprocess.Popen(
+            _guard_program(True),
+            creationflags=subprocess.CREATE_NO_WINDOW
+            | subprocess.DETACHED_PROCESS)
+        print("Guard started in the background. You may close this terminal;")
+        print("the guard keeps protecting in the background.")
+        print("  guard open   - open a new terminal")
+        print("  guard status - check state and protection")
+        print("  guard off    - stop it for good")
+
+    elif action == "off":
+        if not state or not _pid_alive(state.get("pid", -1)):
+            print("Guard is not running.")
+            try:
+                os.remove(guardd.STATE_FILE)
+            except OSError:
+                pass
+            return
+        try:
+            with open(guardd.STOP_FILE, "w") as handle:
+                handle.write("stop")
+        except OSError:
+            pass
+        print("Stopping guard...")
+        import time as _t
+        for _ in range(20):
+            _t.sleep(0.3)
+            if not _pid_alive(state["pid"]):
+                print("Guard stopped.")
+                return
+        subprocess.run(["taskkill", "/PID", str(state["pid"]), "/F"],
+                       capture_output=True, text=True)
+        print("Guard force-stopped.")
+
+    elif action == "open":
+        if not state or not _pid_alive(state.get("pid", -1)):
+            print("Guard is not running. Start it first: guard on")
+            return
+        subprocess.Popen(_guard_program(False),
+                         creationflags=subprocess.CREATE_NEW_CONSOLE)
+        print("New terminal opened. You may close this window any time;")
+        print("the background guard keeps running.")
+
+    elif action == "status":
+        if not state:
+            print("Guard: not running. Start it with 'guard on'.")
+            return
+        alive = _pid_alive(state.get("pid", -1))
+        print(f"Guard      : {'RUNNING' if alive else 'STOPPED (stale state)'}")
+        print(f"PID        : {state.get('pid')}")
+        print(f"Started    : {state.get('start')}")
+        print(f"Heartbeat  : {state.get('last_heartbeat')}")
+        print("Protection snapshot (refreshed every minute):")
+        prot = state.get("protection") or {}
+        for key in ("defender", "firewall", "uac"):
+            print(f"  {key:<10} {prot.get(key, '?')}")
+        if not alive:
+            print("State file is stale - run 'guard on' to restart.")
+    else:
+        print(f"Unknown guard action: {action}")
+        print("Usage: guard <on|off|open|status>")
+
+
+@register("protect", "System protection status & hardening advice")
+def cmd_protect(arguments):
+    """Read-only protection overview: Defender, firewall, UAC."""
+    print("System protection check")
+    print("-" * 40)
+
+    out = _run_cap(["powershell", "-NoProfile", "-Command",
+                    "(Get-MpComputerStatus) | Select-Object "
+                    "RealTimeProtectionEnabled,AntivirusEnabled,"
+                    "AntivirusSignatureVersion | Out-String"])
+    if out.strip():
+        print("Windows Defender:")
+        for line in out.splitlines():
+            line = line.strip()
+            if line and ("True" in line or "False" in line
+                         or "Version" in line):
+                print(f"  {line}")
+    else:
+        print("Windows Defender: status unavailable (needs administrator?)")
+
+    fw = _run_cap(["netsh", "advfirewall", "show", "allprofiles", "state"])
+    on_count = sum(1 for line in fw.splitlines()
+                   if "ON" in line or "打开" in line)
+    off_count = sum(1 for line in fw.splitlines()
+                    if "OFF" in line or "关闭" in line)
+    if on_count >= 2:
+        fw_state = "ON"
+    elif off_count >= 2:
+        fw_state = "OFF"
+    else:
+        fw_state = "?"
+    print(f"Firewall       : {fw_state} ({on_count} profile(s) on)")
+
+    try:
+        import winreg
+        with winreg.OpenKey(
+                winreg.HKEY_LOCAL_MACHINE,
+                r"SOFTWARE\Microsoft\Windows\CurrentVersion\Policies\System") as key:
+            value, _ = winreg.QueryValueEx(key, "EnableLUA")
+            uac = "enabled" if value == 1 else "disabled"
+    except Exception:
+        uac = "unknown"
+    print(f"UAC            : {uac}")
+
+    print("-" * 40)
+    print("Advice: keep Defender real-time protection ON, firewall ON and")
+    print("UAC enabled. Use 'scanmal' to scan for traces, 'lockdown' to")
+    print("harden the machine, and 'guard on' for background monitoring.")
 
 

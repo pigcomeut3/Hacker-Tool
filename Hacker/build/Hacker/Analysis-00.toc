@@ -718,6 +718,14 @@
    'C:\\Users\\Xiaozhu\\AppData\\Local\\Doubao\\User '
    'Data\\sandbox_runtime\\bases\\c98c5042338ed152c6f10ecd8591889f\\python\\Lib\\stringprep.py',
    'PYMODULE'),
+  ('_py_abc',
+   'C:\\Users\\Xiaozhu\\AppData\\Local\\Doubao\\User '
+   'Data\\sandbox_runtime\\bases\\c98c5042338ed152c6f10ecd8591889f\\python\\Lib\\_py_abc.py',
+   'PYMODULE'),
+  ('codeop',
+   'C:\\Users\\Xiaozhu\\AppData\\Local\\Doubao\\User '
+   'Data\\sandbox_runtime\\bases\\c98c5042338ed152c6f10ecd8591889f\\python\\Lib\\codeop.py',
+   'PYMODULE'),
   ('_py_warnings',
    'C:\\Users\\Xiaozhu\\AppData\\Local\\Doubao\\User '
    'Data\\sandbox_runtime\\bases\\c98c5042338ed152c6f10ecd8591889f\\python\\Lib\\_py_warnings.py',
@@ -725,14 +733,6 @@
   ('tracemalloc',
    'C:\\Users\\Xiaozhu\\AppData\\Local\\Doubao\\User '
    'Data\\sandbox_runtime\\bases\\c98c5042338ed152c6f10ecd8591889f\\python\\Lib\\tracemalloc.py',
-   'PYMODULE'),
-  ('codeop',
-   'C:\\Users\\Xiaozhu\\AppData\\Local\\Doubao\\User '
-   'Data\\sandbox_runtime\\bases\\c98c5042338ed152c6f10ecd8591889f\\python\\Lib\\codeop.py',
-   'PYMODULE'),
-  ('_py_abc',
-   'C:\\Users\\Xiaozhu\\AppData\\Local\\Doubao\\User '
-   'Data\\sandbox_runtime\\bases\\c98c5042338ed152c6f10ecd8591889f\\python\\Lib\\_py_abc.py',
    'PYMODULE'),
   ('h', 'C:\\Users\\Xiaozhu\\Desktop\\Hacker\\src\\h.py', 'PYMODULE'),
   ('colors', 'C:\\Users\\Xiaozhu\\Desktop\\Hacker\\src\\colors.py', 'PYMODULE'),
@@ -824,6 +824,7 @@
    'C:\\Users\\Xiaozhu\\AppData\\Local\\Doubao\\User '
    'Data\\sandbox_runtime\\bases\\c98c5042338ed152c6f10ecd8591889f\\python\\Lib\\shlex.py',
    'PYMODULE'),
+  ('guardd', 'C:\\Users\\Xiaozhu\\Desktop\\Hacker\\src\\guardd.py', 'PYMODULE'),
   ('ctypes',
    'C:\\Users\\Xiaozhu\\AppData\\Local\\Doubao\\User '
    'Data\\sandbox_runtime\\bases\\c98c5042338ed152c6f10ecd8591889f\\python\\Lib\\ctypes\\__init__.py',
@@ -959,7 +960,19 @@
   ('base_library.zip',
    'C:\\Users\\Xiaozhu\\Desktop\\Hacker\\build\\Hacker\\base_library.zip',
    'DATA')],
- [('encodings.zlib_codec',
+ [('types',
+   'C:\\Users\\Xiaozhu\\AppData\\Local\\Doubao\\User '
+   'Data\\sandbox_runtime\\bases\\c98c5042338ed152c6f10ecd8591889f\\python\\Lib\\types.py',
+   'PYMODULE'),
+  ('sre_parse',
+   'C:\\Users\\Xiaozhu\\AppData\\Local\\Doubao\\User '
+   'Data\\sandbox_runtime\\bases\\c98c5042338ed152c6f10ecd8591889f\\python\\Lib\\sre_parse.py',
+   'PYMODULE'),
+  ('reprlib',
+   'C:\\Users\\Xiaozhu\\AppData\\Local\\Doubao\\User '
+   'Data\\sandbox_runtime\\bases\\c98c5042338ed152c6f10ecd8591889f\\python\\Lib\\reprlib.py',
+   'PYMODULE'),
+  ('encodings.zlib_codec',
    'C:\\Users\\Xiaozhu\\AppData\\Local\\Doubao\\User '
    'Data\\sandbox_runtime\\bases\\c98c5042338ed152c6f10ecd8591889f\\python\\Lib\\encodings\\zlib_codec.py',
    'PYMODULE'),
@@ -1451,17 +1464,45 @@
    'C:\\Users\\Xiaozhu\\AppData\\Local\\Doubao\\User '
    'Data\\sandbox_runtime\\bases\\c98c5042338ed152c6f10ecd8591889f\\python\\Lib\\encodings\\__init__.py',
    'PYMODULE'),
-  ('sre_compile',
+  ('_collections_abc',
    'C:\\Users\\Xiaozhu\\AppData\\Local\\Doubao\\User '
-   'Data\\sandbox_runtime\\bases\\c98c5042338ed152c6f10ecd8591889f\\python\\Lib\\sre_compile.py',
+   'Data\\sandbox_runtime\\bases\\c98c5042338ed152c6f10ecd8591889f\\python\\Lib\\_collections_abc.py',
    'PYMODULE'),
-  ('keyword',
+  ('locale',
    'C:\\Users\\Xiaozhu\\AppData\\Local\\Doubao\\User '
-   'Data\\sandbox_runtime\\bases\\c98c5042338ed152c6f10ecd8591889f\\python\\Lib\\keyword.py',
+   'Data\\sandbox_runtime\\bases\\c98c5042338ed152c6f10ecd8591889f\\python\\Lib\\locale.py',
+   'PYMODULE'),
+  ('genericpath',
+   'C:\\Users\\Xiaozhu\\AppData\\Local\\Doubao\\User '
+   'Data\\sandbox_runtime\\bases\\c98c5042338ed152c6f10ecd8591889f\\python\\Lib\\genericpath.py',
+   'PYMODULE'),
+  ('ntpath',
+   'C:\\Users\\Xiaozhu\\AppData\\Local\\Doubao\\User '
+   'Data\\sandbox_runtime\\bases\\c98c5042338ed152c6f10ecd8591889f\\python\\Lib\\ntpath.py',
    'PYMODULE'),
   ('enum',
    'C:\\Users\\Xiaozhu\\AppData\\Local\\Doubao\\User '
    'Data\\sandbox_runtime\\bases\\c98c5042338ed152c6f10ecd8591889f\\python\\Lib\\enum.py',
+   'PYMODULE'),
+  ('codecs',
+   'C:\\Users\\Xiaozhu\\AppData\\Local\\Doubao\\User '
+   'Data\\sandbox_runtime\\bases\\c98c5042338ed152c6f10ecd8591889f\\python\\Lib\\codecs.py',
+   'PYMODULE'),
+  ('weakref',
+   'C:\\Users\\Xiaozhu\\AppData\\Local\\Doubao\\User '
+   'Data\\sandbox_runtime\\bases\\c98c5042338ed152c6f10ecd8591889f\\python\\Lib\\weakref.py',
+   'PYMODULE'),
+  ('operator',
+   'C:\\Users\\Xiaozhu\\AppData\\Local\\Doubao\\User '
+   'Data\\sandbox_runtime\\bases\\c98c5042338ed152c6f10ecd8591889f\\python\\Lib\\operator.py',
+   'PYMODULE'),
+  ('functools',
+   'C:\\Users\\Xiaozhu\\AppData\\Local\\Doubao\\User '
+   'Data\\sandbox_runtime\\bases\\c98c5042338ed152c6f10ecd8591889f\\python\\Lib\\functools.py',
+   'PYMODULE'),
+  ('io',
+   'C:\\Users\\Xiaozhu\\AppData\\Local\\Doubao\\User '
+   'Data\\sandbox_runtime\\bases\\c98c5042338ed152c6f10ecd8591889f\\python\\Lib\\io.py',
    'PYMODULE'),
   ('re._parser',
    'C:\\Users\\Xiaozhu\\AppData\\Local\\Doubao\\User '
@@ -1483,97 +1524,57 @@
    'C:\\Users\\Xiaozhu\\AppData\\Local\\Doubao\\User '
    'Data\\sandbox_runtime\\bases\\c98c5042338ed152c6f10ecd8591889f\\python\\Lib\\re\\__init__.py',
    'PYMODULE'),
+  ('abc',
+   'C:\\Users\\Xiaozhu\\AppData\\Local\\Doubao\\User '
+   'Data\\sandbox_runtime\\bases\\c98c5042338ed152c6f10ecd8591889f\\python\\Lib\\abc.py',
+   'PYMODULE'),
+  ('stat',
+   'C:\\Users\\Xiaozhu\\AppData\\Local\\Doubao\\User '
+   'Data\\sandbox_runtime\\bases\\c98c5042338ed152c6f10ecd8591889f\\python\\Lib\\stat.py',
+   'PYMODULE'),
   ('sre_constants',
    'C:\\Users\\Xiaozhu\\AppData\\Local\\Doubao\\User '
    'Data\\sandbox_runtime\\bases\\c98c5042338ed152c6f10ecd8591889f\\python\\Lib\\sre_constants.py',
    'PYMODULE'),
-  ('functools',
+  ('sre_compile',
    'C:\\Users\\Xiaozhu\\AppData\\Local\\Doubao\\User '
-   'Data\\sandbox_runtime\\bases\\c98c5042338ed152c6f10ecd8591889f\\python\\Lib\\functools.py',
-   'PYMODULE'),
-  ('linecache',
-   'C:\\Users\\Xiaozhu\\AppData\\Local\\Doubao\\User '
-   'Data\\sandbox_runtime\\bases\\c98c5042338ed152c6f10ecd8591889f\\python\\Lib\\linecache.py',
-   'PYMODULE'),
-  ('codecs',
-   'C:\\Users\\Xiaozhu\\AppData\\Local\\Doubao\\User '
-   'Data\\sandbox_runtime\\bases\\c98c5042338ed152c6f10ecd8591889f\\python\\Lib\\codecs.py',
-   'PYMODULE'),
-  ('io',
-   'C:\\Users\\Xiaozhu\\AppData\\Local\\Doubao\\User '
-   'Data\\sandbox_runtime\\bases\\c98c5042338ed152c6f10ecd8591889f\\python\\Lib\\io.py',
-   'PYMODULE'),
-  ('reprlib',
-   'C:\\Users\\Xiaozhu\\AppData\\Local\\Doubao\\User '
-   'Data\\sandbox_runtime\\bases\\c98c5042338ed152c6f10ecd8591889f\\python\\Lib\\reprlib.py',
-   'PYMODULE'),
-  ('warnings',
-   'C:\\Users\\Xiaozhu\\AppData\\Local\\Doubao\\User '
-   'Data\\sandbox_runtime\\bases\\c98c5042338ed152c6f10ecd8591889f\\python\\Lib\\warnings.py',
-   'PYMODULE'),
-  ('copyreg',
-   'C:\\Users\\Xiaozhu\\AppData\\Local\\Doubao\\User '
-   'Data\\sandbox_runtime\\bases\\c98c5042338ed152c6f10ecd8591889f\\python\\Lib\\copyreg.py',
+   'Data\\sandbox_runtime\\bases\\c98c5042338ed152c6f10ecd8591889f\\python\\Lib\\sre_compile.py',
    'PYMODULE'),
   ('traceback',
    'C:\\Users\\Xiaozhu\\AppData\\Local\\Doubao\\User '
    'Data\\sandbox_runtime\\bases\\c98c5042338ed152c6f10ecd8591889f\\python\\Lib\\traceback.py',
    'PYMODULE'),
-  ('sre_parse',
+  ('warnings',
    'C:\\Users\\Xiaozhu\\AppData\\Local\\Doubao\\User '
-   'Data\\sandbox_runtime\\bases\\c98c5042338ed152c6f10ecd8591889f\\python\\Lib\\sre_parse.py',
+   'Data\\sandbox_runtime\\bases\\c98c5042338ed152c6f10ecd8591889f\\python\\Lib\\warnings.py',
    'PYMODULE'),
-  ('locale',
+  ('linecache',
    'C:\\Users\\Xiaozhu\\AppData\\Local\\Doubao\\User '
-   'Data\\sandbox_runtime\\bases\\c98c5042338ed152c6f10ecd8591889f\\python\\Lib\\locale.py',
-   'PYMODULE'),
-  ('heapq',
-   'C:\\Users\\Xiaozhu\\AppData\\Local\\Doubao\\User '
-   'Data\\sandbox_runtime\\bases\\c98c5042338ed152c6f10ecd8591889f\\python\\Lib\\heapq.py',
-   'PYMODULE'),
-  ('collections',
-   'C:\\Users\\Xiaozhu\\AppData\\Local\\Doubao\\User '
-   'Data\\sandbox_runtime\\bases\\c98c5042338ed152c6f10ecd8591889f\\python\\Lib\\collections\\__init__.py',
-   'PYMODULE'),
-  ('_collections_abc',
-   'C:\\Users\\Xiaozhu\\AppData\\Local\\Doubao\\User '
-   'Data\\sandbox_runtime\\bases\\c98c5042338ed152c6f10ecd8591889f\\python\\Lib\\_collections_abc.py',
-   'PYMODULE'),
-  ('posixpath',
-   'C:\\Users\\Xiaozhu\\AppData\\Local\\Doubao\\User '
-   'Data\\sandbox_runtime\\bases\\c98c5042338ed152c6f10ecd8591889f\\python\\Lib\\posixpath.py',
-   'PYMODULE'),
-  ('abc',
-   'C:\\Users\\Xiaozhu\\AppData\\Local\\Doubao\\User '
-   'Data\\sandbox_runtime\\bases\\c98c5042338ed152c6f10ecd8591889f\\python\\Lib\\abc.py',
-   'PYMODULE'),
-  ('genericpath',
-   'C:\\Users\\Xiaozhu\\AppData\\Local\\Doubao\\User '
-   'Data\\sandbox_runtime\\bases\\c98c5042338ed152c6f10ecd8591889f\\python\\Lib\\genericpath.py',
-   'PYMODULE'),
-  ('operator',
-   'C:\\Users\\Xiaozhu\\AppData\\Local\\Doubao\\User '
-   'Data\\sandbox_runtime\\bases\\c98c5042338ed152c6f10ecd8591889f\\python\\Lib\\operator.py',
-   'PYMODULE'),
-  ('weakref',
-   'C:\\Users\\Xiaozhu\\AppData\\Local\\Doubao\\User '
-   'Data\\sandbox_runtime\\bases\\c98c5042338ed152c6f10ecd8591889f\\python\\Lib\\weakref.py',
-   'PYMODULE'),
-  ('types',
-   'C:\\Users\\Xiaozhu\\AppData\\Local\\Doubao\\User '
-   'Data\\sandbox_runtime\\bases\\c98c5042338ed152c6f10ecd8591889f\\python\\Lib\\types.py',
+   'Data\\sandbox_runtime\\bases\\c98c5042338ed152c6f10ecd8591889f\\python\\Lib\\linecache.py',
    'PYMODULE'),
   ('_weakrefset',
    'C:\\Users\\Xiaozhu\\AppData\\Local\\Doubao\\User '
    'Data\\sandbox_runtime\\bases\\c98c5042338ed152c6f10ecd8591889f\\python\\Lib\\_weakrefset.py',
    'PYMODULE'),
-  ('ntpath',
+  ('heapq',
    'C:\\Users\\Xiaozhu\\AppData\\Local\\Doubao\\User '
-   'Data\\sandbox_runtime\\bases\\c98c5042338ed152c6f10ecd8591889f\\python\\Lib\\ntpath.py',
+   'Data\\sandbox_runtime\\bases\\c98c5042338ed152c6f10ecd8591889f\\python\\Lib\\heapq.py',
    'PYMODULE'),
-  ('stat',
+  ('posixpath',
    'C:\\Users\\Xiaozhu\\AppData\\Local\\Doubao\\User '
-   'Data\\sandbox_runtime\\bases\\c98c5042338ed152c6f10ecd8591889f\\python\\Lib\\stat.py',
+   'Data\\sandbox_runtime\\bases\\c98c5042338ed152c6f10ecd8591889f\\python\\Lib\\posixpath.py',
+   'PYMODULE'),
+  ('keyword',
+   'C:\\Users\\Xiaozhu\\AppData\\Local\\Doubao\\User '
+   'Data\\sandbox_runtime\\bases\\c98c5042338ed152c6f10ecd8591889f\\python\\Lib\\keyword.py',
+   'PYMODULE'),
+  ('collections',
+   'C:\\Users\\Xiaozhu\\AppData\\Local\\Doubao\\User '
+   'Data\\sandbox_runtime\\bases\\c98c5042338ed152c6f10ecd8591889f\\python\\Lib\\collections\\__init__.py',
+   'PYMODULE'),
+  ('copyreg',
+   'C:\\Users\\Xiaozhu\\AppData\\Local\\Doubao\\User '
+   'Data\\sandbox_runtime\\bases\\c98c5042338ed152c6f10ecd8591889f\\python\\Lib\\copyreg.py',
    'PYMODULE'),
   ('os',
    'C:\\Users\\Xiaozhu\\AppData\\Local\\Doubao\\User '

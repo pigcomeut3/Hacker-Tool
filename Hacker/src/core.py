@@ -13,11 +13,40 @@ import pacho
 
 signal.signal(signal.SIGINT, signal.SIG_IGN)
 
+# full command groups shown by `help` (names are filtered against the live
+# registry, and any command not covered is appended automatically, so the
+# list can never go stale)
+HELP_GROUPS = [
+    ("Basics", ["help", "commands", "history", "version", "info", "banner",
+                "cls", "sudo", "pkg"]),
+    ("Navigation & files", ["cd", "pwd", "list", "tree", "find", "where",
+                            "drives", "cat", "head", "tail", "touch", "mkdir",
+                            "rm", "cp", "mv", "ren", "size", "open", "run",
+                            "hash", "hex", "grep", "wc", "sort", "uniq", "nl",
+                            "diff", "zip", "unzip", "ziplist", "largest"]),
+    ("System", ["sysinfo", "whoami", "cpu", "mem", "disk", "uptime", "battery",
+                "ver", "env", "date", "time", "hostname", "title", "beep",
+                "sleep", "top", "protect"]),
+    ("Network", ["ip", "myip", "ping", "nslookup", "netstat", "scan", "mac",
+                 "route", "wifi", "arp", "tracert", "ipscan", "webserver",
+                 "http", "pacho"]),
+    ("Processes", ["ps", "kill", "pkill", "procs", "mon"]),
+    ("Text & data", ["echo", "clip", "b64", "b32", "urlenc", "urldec",
+                     "hexenc", "binenc", "morse", "rot13", "md5str", "caesar",
+                     "case", "rev", "convert", "jsonfmt", "csvview", "calc",
+                     "uuid", "rand", "py"]),
+    ("Editor & utils", ["edit", "timer", "clock", "typewriter"]),
+    ("Fun", ["matrix", "hack", "hacksay", "guess", "rps", "dice", "coin"]),
+    ("Script system", ["h"]),
+    ("Integration", ["syst", "shell", "mkiso", "guard"]),
+]
+
 # tool-pack command groups shown by `help` (names are filtered against the
 # live registry so a removed command simply disappears)
 TOOL_PACK_GROUPS = [
     ("processes/monitor", ["procs", "mon"]),
-    ("network", ["portscan", "headers", "dns", "netrecon", "dnsflush"]),
+    ("network", ["portscan", "headers", "dns", "netrecon", "dnsflush",
+                 "vulnscan", "pagelinks"]),
     ("system forensics", ["boot", "services", "drivers", "shares", "sched",
                           "eventlog", "recent", "hosts"]),
     ("file forensics", ["strings", "largest", "dupes", "wipe", "hashfile"]),
@@ -114,20 +143,27 @@ def run():
             os.system("cls")
             banner.show()
         elif normalized_cmd == "help" and not arguments.strip():
-            print(colors.white("Available commands:"))
-            print(colors.white("  help - Show this help message"))
-            print(colors.white("  pkg install <name> - Install a custom library or package"))
-            print(colors.white("  pkg list - List custom libraries"))
-            print(colors.white("  cd <directory> - Change the current directory"))
-            print(colors.white("  list - List files in the current directory"))
-            print(colors.white("  run <file> - Run or open a file with its associated application"))
-            print(colors.white("  pacho <url> - Fetch page title, text, links, and save HTML"))
-            print(colors.white("  cls - Clear the screen"))
-            print(colors.white("  info - Show information about the Hacker Tool"))
-            print(colors.white("  version - Show the version of the Hacker Tool"))
-            print(colors.white("  h - Hacker script system (.ke files), try 'h help'"))
-            print(colors.white("  commands - List all available commands"))
-            print(colors.white("  exit - Exit the Hacker Tool"))
+            print(colors.white("Available commands (type 'commands' for details):"))
+            covered = set()
+            for group, names in HELP_GROUPS:
+                present = [n for n in names if n in commands.COMMANDS]
+                if not present:
+                    continue
+                covered.update(present)
+                print(colors.white(
+                    f"  {group:<18} : {' '.join(present)}"))
+            # tool-pack commands are shown in their own section below,
+            # so exclude them from the coverage check
+            covered.update(n for _, names in TOOL_PACK_GROUPS
+                           for n in names)
+            # any command still not covered is appended so the list can
+            # never go stale
+            missing = sorted(set(commands.COMMANDS) - covered)
+            if missing:
+                print(colors.white("  Other             : " + " ".join(missing)))
+            print(colors.white(""))
+            print(colors.white("Built-ins: cd, list, run, pacho, cls, pkg, "
+                               "info, version, exit"))
             print(colors.white(""))
             print(colors.white("Real tool pack (type 'commands' for details):"))
             for group, names in TOOL_PACK_GROUPS:

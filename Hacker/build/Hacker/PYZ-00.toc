@@ -297,6 +297,7 @@
    'C:\\Users\\Xiaozhu\\AppData\\Local\\Doubao\\User '
    'Data\\sandbox_runtime\\bases\\c98c5042338ed152c6f10ecd8591889f\\python\\Lib\\glob.py',
    'PYMODULE'),
+  ('guardd', 'C:\\Users\\Xiaozhu\\Desktop\\Hacker\\src\\guardd.py', 'PYMODULE'),
   ('gzip',
    'C:\\Users\\Xiaozhu\\AppData\\Local\\Doubao\\User '
    'Data\\sandbox_runtime\\bases\\c98c5042338ed152c6f10ecd8591889f\\python\\Lib\\gzip.py',
