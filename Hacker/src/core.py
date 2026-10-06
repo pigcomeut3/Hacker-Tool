@@ -9,9 +9,13 @@ import banner
 import colors
 import pkg
 import pacho
+import dac
 
 
-signal.signal(signal.SIGINT, signal.SIG_IGN)
+# SIGINT keeps Python's default handler so Ctrl+C raises KeyboardInterrupt,
+# which is caught per-command and at the prompt (never kills the console).
+if hasattr(signal, "SIGBREAK"):
+    signal.signal(signal.SIGBREAK, signal.SIG_IGN)
 
 # full command groups shown by `help` (names are filtered against the live
 # registry, and any command not covered is appended automatically, so the
@@ -23,22 +27,27 @@ HELP_GROUPS = [
                             "drives", "cat", "head", "tail", "touch", "mkdir",
                             "rm", "cp", "mv", "ren", "size", "open", "run",
                             "hash", "hex", "grep", "wc", "sort", "uniq", "nl",
-                            "diff", "zip", "unzip", "ziplist"]),
+                            "diff", "zip", "unzip", "ziplist", "erase",
+                            "delfolder", "attribf"]),
     ("System", ["sysinfo", "whoami", "cpu", "mem", "disk", "uptime", "battery",
                 "ver", "env", "date", "time", "hostname", "title", "beep",
-                "sleep", "top", "protect"]),
+                "sleep", "top", "protect", "path", "poweroff", "reboot",
+                "lockpc"]),
     ("Network", ["ip", "myip", "ping", "nslookup", "netstat", "scan", "mac",
                  "route", "wifi", "arp", "tracert", "ipscan", "webserver",
-                 "http", "pacho"]),
+                 "http", "pacho", "weather"]),
     ("Processes", ["ps", "kill", "pkill"]),
     ("Text & data", ["echo", "clip", "b64", "b32", "urlenc", "urldec",
                      "hexenc", "binenc", "morse", "rot13", "md5str", "caesar",
                      "case", "rev", "convert", "jsonfmt", "csvview", "calc",
-                     "uuid", "rand", "py"]),
+                     "uuid", "rand", "py", "count", "shuffle", "trim", "pad",
+                     "fib", "prime", "pi", "fact", "randpw", "pwstrength",
+                     "ts", "date2ts", "ascii", "chr"]),
     ("Editor & utils", ["edit", "timer", "clock", "typewriter"]),
-    ("Fun", ["matrix", "hack", "hacksay", "guess", "rps", "dice", "coin"]),
+    ("Fun", ["matrix", "hack", "hacksay", "guess", "rps", "dice", "coin",
+             "joke", "quote", "facts", "spin", "progress", "typingtest"]),
     ("Script system", ["h"]),
-    ("Integration", ["syst", "shell", "mkiso", "guard"]),
+    ("Integration", ["syst", "shell", "mkiso", "guard", "dac", "wsl"]),
 ]
 
 # tool-pack command groups shown by `help` (names are filtered against the
@@ -120,76 +129,97 @@ def run_program(path):
         print(f"Could not open file with its Windows application: {error}")
 
 
+def _flush_input():
+    """Discard any keys buffered while a command was running, so stray
+    keystrokes do not leak into the next prompt."""
+    try:
+        import msvcrt
+        while msvcrt.kbhit():
+            msvcrt.getwch()
+    except Exception:
+        pass
+
+
 def run():
     os.system("cls")
     banner.show()
     while True:
+        _flush_input()
         try:
             cmd = input(colors.green("root@hacker:~$ "))
         except KeyboardInterrupt:
+            print()
             continue
-
-        command_text = cmd.strip()
-        if command_text:
-            commands.record_history(cmd)
-        command_parts = command_text.split(None, 1)
-        command_name = command_parts[0] if command_parts else ""
-        arguments = command_parts[1] if len(command_parts) > 1 else ""
-        normalized_cmd = command_name.lower()
-        if normalized_cmd == "exit" and not arguments.strip():
-            print(colors.white("Exiting the Hacker Tool..."))
+        except EOFError:
+            print(colors.white("Input closed. Exiting Hacker Tool..."))
             break
-        elif normalized_cmd == "cls" and not arguments.strip():
-            os.system("cls")
-            banner.show()
-        elif normalized_cmd == "help" and not arguments.strip():
-            print(colors.white("Available commands (type 'commands' for details):"))
-            covered = set()
-            for group, names in HELP_GROUPS:
-                present = [n for n in names if n in commands.COMMANDS]
-                if not present:
-                    continue
-                covered.update(present)
-                print(colors.white(
-                    f"  {group:<18} : {' '.join(present)}"))
-            # tool-pack commands are shown in their own section below,
-            # so exclude them from the coverage check
-            covered.update(n for _, names in TOOL_PACK_GROUPS
-                           for n in names)
-            # any command still not covered is appended so the list can
-            # never go stale
-            missing = sorted(set(commands.COMMANDS) - covered)
-            if missing:
-                print(colors.white("  Other             : " + " ".join(missing)))
-            print(colors.white(""))
-            print(colors.white("Built-ins: cd, list, run, pacho, cls, pkg, "
-                               "info, version, exit"))
-            print(colors.white(""))
-            print(colors.white("Real tool pack (type 'commands' for details):"))
-            for group, names in TOOL_PACK_GROUPS:
-                present = [n for n in names if n in commands.COMMANDS]
-                if present:
+
+        try:
+            command_text = cmd.strip()
+            if command_text:
+                commands.record_history(cmd)
+            command_parts = command_text.split(None, 1)
+            command_name = command_parts[0] if command_parts else ""
+            arguments = command_parts[1] if len(command_parts) > 1 else ""
+            normalized_cmd = command_name.lower()
+            if normalized_cmd == "exit" and not arguments.strip():
+                print(colors.white("Exiting the Hacker Tool..."))
+                break
+            elif normalized_cmd == "cls" and not arguments.strip():
+                os.system("cls")
+                banner.show()
+            elif normalized_cmd == "help" and not arguments.strip():
+                print(colors.white("Available commands (type 'commands' for details):"))
+                covered = set()
+                for group, names in HELP_GROUPS:
+                    present = [n for n in names if n in commands.COMMANDS]
+                    if not present:
+                        continue
+                    covered.update(present)
                     print(colors.white(
                         f"  {group:<18} : {' '.join(present)}"))
-        elif normalized_cmd == "cd":
-            change_directory(arguments)
-        elif normalized_cmd == "list" and not arguments.strip():
-            list_directory()
-        elif normalized_cmd == "run":
-            run_program(arguments)
-        elif normalized_cmd == "pacho":
-            if arguments.strip():
-                pacho.crawl(arguments.strip())
+                # tool-pack commands are shown in their own section below,
+                # so exclude them from the coverage check
+                covered.update(n for _, names in TOOL_PACK_GROUPS
+                               for n in names)
+                # any command still not covered is appended so the list can
+                # never go stale
+                missing = sorted(set(commands.COMMANDS) - covered)
+                if missing:
+                    print(colors.white("  Other             : " + " ".join(missing)))
+                print(colors.white(""))
+                print(colors.white("Built-ins: cd, list, run, pacho, cls, pkg, "
+                                   "info, version, exit"))
+                print(colors.white(""))
+                print(colors.white("Real tool pack (type 'commands' for details):"))
+                for group, names in TOOL_PACK_GROUPS:
+                    present = [n for n in names if n in commands.COMMANDS]
+                    if present:
+                        print(colors.white(
+                            f"  {group:<18} : {' '.join(present)}"))
+            elif normalized_cmd == "cd":
+                change_directory(arguments)
+            elif normalized_cmd == "list" and not arguments.strip():
+                list_directory()
+            elif normalized_cmd == "run":
+                run_program(arguments)
+            elif normalized_cmd == "pacho":
+                if arguments.strip():
+                    pacho.crawl(arguments.strip())
+                else:
+                    print("Usage: pacho <http:// or https:// URL>")
+            elif normalized_cmd == "info" and not arguments.strip():
+                print(colors.white("Developed by: pig_comeut3"))
+                print(colors.white("GitHub: pig_comeut3@163.com"))
+            elif normalized_cmd == "version" and not arguments.strip():
+                print(colors.white("Hacker Tool v2.0"))
+            elif normalized_cmd == "pkg":
+                pkg.handle(arguments.split())
+            elif normalized_cmd in commands.COMMANDS:
+                commands.COMMANDS[normalized_cmd][0](arguments)
+            elif dac.has(normalized_cmd):
+                dac.run(normalized_cmd, arguments)
             else:
-                print("Usage: pacho <http:// or https:// URL>")
-        elif normalized_cmd == "info" and not arguments.strip():
-            print(colors.white("Developed by: pig_comeut3"))
-            print(colors.white("GitHub: pig_comeut3@163.com"))
-        elif normalized_cmd == "version" and not arguments.strip():
-            print(colors.white("Hacker Tool v2.0"))
-        elif normalized_cmd == "pkg":
-            pkg.handle(arguments.split())
-        elif normalized_cmd in commands.COMMANDS:
-            commands.COMMANDS[normalized_cmd][0](arguments)
-        else:
-            print(colors.white(f"Unknown command: {cmd}"))
+                print(colors.white(f"Unknown command: {cmd}"))
+        except KeyboardInterrupt:
+            print(colors.yellow("^C Interrupted."))

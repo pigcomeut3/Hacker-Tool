@@ -1,0 +1,9 @@
+{
+  "name": "testpkg",
+  "version": "0.1.0",
+  "desc": "DAC 示例包",
+  "entry": "main.ke",
+  "commands": {
+    "info": "info.ke"
+  }
+}

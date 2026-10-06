@@ -19,6 +19,7 @@ import uuid
 from pathlib import Path
 
 import colors
+import commands
 import hacklib
 
 if getattr(sys, "frozen", False):
@@ -44,9 +45,12 @@ TEMPLATE = (
     "# {name}.ke - Hacker script\n"
     "# Run it with: h run {name}\n"
     "\n"
-    'print("Hello from Hacker!")\n'
-    'print("MD5 of hacker:", md5("hacker"))\n'
-    'print("Base64 of hacker:", enc_base64("hacker"))\n'
+    "help\n"
+    "sysinfo\n"
+    "echo Hello from Hacker!\n"
+    "md5str hacker\n"
+    "b64 hacker\n"
+    "joke\n"
 )
 
 _RUN_NAMESPACE = {
@@ -125,35 +129,72 @@ def edit_script(rest):
     print(f"Opened in Notepad: {path}")
 
 
+def execute_lines(lines, display_prefix=True):
+    """Run .ke lines as Hacker native commands (one command per line)."""
+    for line_number, raw_line in enumerate(lines, 1):
+        line = raw_line.strip()
+        if not line or line.startswith("#"):
+            continue
+        if line == "exit":
+            print(colors.white("Script stopped by 'exit'."))
+            break
+        parts = line.split(None, 1)
+        cmd_name = parts[0].lower()
+        cmd_args = parts[1] if len(parts) > 1 else ""
+        if cmd_name == "help" and not cmd_args.strip():
+            print(colors.white(
+                f"Hacker commands: {len(commands.COMMANDS)} available. "
+                "Type 'commands' for the full list."))
+            continue
+        if cmd_name in commands.COMMANDS:
+            if display_prefix:
+                print(colors.cyan(f"[{line_number}] {line}"))
+            try:
+                commands.COMMANDS[cmd_name][0](cmd_args)
+            except SystemExit:
+                break
+            except Exception as error:
+                print(f"Line {line_number} error: {type(error).__name__}: {error}")
+        else:
+            print(f"Line {line_number}: Unknown command: {cmd_name}")
+
+
 @_action("run")
 def run_script(rest):
     parts = rest.split(None, 1)
     name = parts[0] if parts else ""
     script_args = parts[1].split() if len(parts) > 1 else []
+    skip_confirm = "-y" in script_args
+    if skip_confirm:
+        script_args.remove("-y")
     if not name:
-        print("Usage: h run <name> [args...]")
+        print("Usage: h run <name> [-y] [args...]")
         return
     path = _script_path(name)
     if not path.is_file():
         print(f"Script not found: {path}")
         return
     source = path.read_text(encoding="utf-8", errors="replace")
-    namespace = dict(hacklib.HACKLIB)
-    namespace.update(_RUN_NAMESPACE)
-    namespace.update(
-        {
-            "__name__": "__main__",
-            "args": script_args,
-            "argc": len(script_args),
-        }
-    )
+    lines = source.splitlines()
+    width = len(str(len(lines)))
+    print(colors.cyan(f"======== {path.name} source ({len(lines)} lines) ========"))
+    for index, line in enumerate(lines, 1):
+        print(f"{index:>{width}} | {line}")
+    print(colors.cyan("-" * 44))
+    if not skip_confirm:
+        try:
+            answer = input(colors.yellow(f"Run {path.name} now? [y/N] ")).strip().lower()
+        except EOFError:
+            print("Aborted.")
+            return
+        if answer not in ("y", "yes"):
+            print("Aborted.")
+            return
     print(colors.white(f"Running {path.name} ..."))
     try:
-        exec(compile(source, str(path), "exec"), namespace)
-    except SystemExit:
-        pass
-    except Exception as error:
-        print(f"Script error: {type(error).__name__}: {error}")
+        execute_lines(lines)
+    except KeyboardInterrupt:
+        print(colors.yellow("^C Script interrupted."))
 
 
 @_action("list")
@@ -219,8 +260,10 @@ def show_help(rest=None):
     print(colors.white("Hacker script system (.ke files):"))
     print(colors.white("  h new <name> - Create a new script"))
     print(colors.white("  h edit <name> - Open a script in Notepad"))
-    print(colors.white("  h run <name> [args...] - Run a script"))
+    print(colors.white("  h run <name> [-y] [args...] - Preview code, then run (add -y to run directly)"))
     print(colors.white("  h list - List all scripts"))
     print(colors.white("  h lib [keyword] - Show the Hacker native library"))
     print(colors.white("  h del <name> - Delete a script"))
     print(colors.white("Scripts are stored in: " + str(SCRIPTS_DIR)))
+    print(colors.white("Script lines are Hacker commands. Type 'help' inside a"))
+    print(colors.white("script to see how many commands are available."))

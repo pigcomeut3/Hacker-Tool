@@ -173,6 +173,7 @@
    'C:\\Users\\Xiaozhu\\AppData\\Local\\Doubao\\User '
    'Data\\sandbox_runtime\\bases\\c98c5042338ed152c6f10ecd8591889f\\python\\Lib\\ctypes\\_layout.py',
    'PYMODULE'),
+  ('dac', 'C:\\Users\\Xiaozhu\\Desktop\\Hacker\\src\\dac.py', 'PYMODULE'),
   ('dataclasses',
    'C:\\Users\\Xiaozhu\\AppData\\Local\\Doubao\\User '
    'Data\\sandbox_runtime\\bases\\c98c5042338ed152c6f10ecd8591889f\\python\\Lib\\dataclasses.py',

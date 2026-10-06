@@ -69,6 +69,14 @@ def _parse_int(text, default, maximum=None):
     return max(1, value)
 
 
+def _ask(prompt):
+    """Safe input that never crashes on EOF (e.g. stray Ctrl+Z)."""
+    try:
+        return input(prompt)
+    except EOFError:
+        return ""
+
+
 def _format_bytes(size):
     for unit in ("B", "KB", "MB", "GB", "TB"):
         if size < 1024:
@@ -123,9 +131,9 @@ def _read_edit_line():
     try:
         import msvcrt
     except ImportError:
-        return input(), False
+        return _ask(""), False
     if not sys.stdin.isatty():
-        return input(), False
+        return _ask(""), False
     chars = []
     while True:
         char = msvcrt.getwch()
@@ -528,7 +536,7 @@ def rm(arguments):
         return
     kind = "directory" if path.is_dir() else "file"
     try:
-        answer = input(f"Delete {kind} {path}? [y/N] ").strip().lower()
+        answer = _ask(f"Delete {kind} {path}? [y/N] ").strip().lower()
     except EOFError:
         print("Aborted.")
         return
@@ -637,7 +645,7 @@ def kill(arguments):
         print("Invalid PID.")
         return
     try:
-        answer = input(f"Kill process {pid}? [y/N] ").strip().lower()
+        answer = _ask(f"Kill process {pid}? [y/N] ").strip().lower()
     except EOFError:
         print("Aborted.")
         return
@@ -1461,7 +1469,7 @@ def pkill(arguments):
         print("Invalid process name.")
         return
     try:
-        answer = input(f"Kill all processes named '{name}'? [y/N] ").strip().lower()
+        answer = _ask(f"Kill all processes named '{name}'? [y/N] ").strip().lower()
     except EOFError:
         print("Aborted.")
         return
@@ -1592,7 +1600,7 @@ def guess(arguments):
     print("I picked a number between 1 and 100. Guess it!")
     for attempt in range(1, 8):
         try:
-            answer = input(f"Guess {attempt}/7: ")
+            answer = _ask(f"Guess {attempt}/7: ")
         except EOFError:
             print("\nGame aborted.")
             return
@@ -1722,17 +1730,25 @@ def _edit_fullscreen(path, lines, name):
         out = ["\x1b[2J\x1b[H"]
         title = f" Hacker Edit - {name}  {'[+]' if changed else ''}"
         out.append(f"\x1b[7m{title[:width - 1]:<{width - 1}}\x1b[0m")
+        total = len(lines)
+        text_w = width - 8
         for index in range(view_height):
             line_index = top + index
-            if line_index < len(lines):
-                shown = lines[line_index][:width - 6]
-                if line_index == row:
-                    out.append(f"{line_index + 1:>4} \x1b[7m{shown:<{width - 6}}\x1b[0m")
-                else:
-                    out.append(f"{line_index + 1:>4} {shown}")
+            if line_index < total:
+                shown = lines[line_index][:text_w]
+                body = f"{line_index + 1:>4} {shown:<{text_w - 5}}"
             else:
-                out.append("~")
-        status = f" Ln {row + 1}, Col {col + 1}  {len(lines)} lines  {'modified' if changed else ''}"
+                body = "~" + " " * (text_w - 1)
+            if line_index == row:
+                body = f"\x1b[7m{body:<{text_w}}\x1b[0m"
+            bar = " "
+            if total > view_height:
+                mark = top + round((row - top) * (view_height - 1)
+                                   / max(1, total - view_height))
+                bar = "▌" if line_index == mark else "│"
+            out.append(body + bar)
+        pct = int((top + view_height) / total * 100) if total else 0
+        status = f" Ln {row + 1}, Col {col + 1}  {total} lines  {pct}%  {'modified' if changed else ''}"
         out.append(f"\x1b[7m{status[:width - 1]:<{width - 1}}\x1b[0m")
         out.append(f" {message[:width - 1]}")
         sys.stdout.write("\n".join(out))
@@ -1870,7 +1886,7 @@ def _edit_line_mode(path, lines):
         nonlocal changed
         if changed:
             try:
-                answer = input("Save changes? [y/N] ").strip().lower()
+                answer = _ask("Save changes? [y/N] ").strip().lower()
             except EOFError:
                 answer = "n"
             if answer in ("y", "yes"):
@@ -2100,7 +2116,7 @@ def mkiso(arguments):
         output = Path.cwd() / f"{source.name}.iso"
     if output.exists():
         try:
-            answer = input(f"Overwrite {output.name}? [y/N] ").strip().lower()
+            answer = _ask(f"Overwrite {output.name}? [y/N] ").strip().lower()
         except EOFError:
             answer = "n"
         if answer not in ("y", "yes"):
@@ -2743,7 +2759,7 @@ def cmd_wipe(arguments):
         return
     size = os.path.getsize(path)
     try:
-        answer = input(f"Overwrite 3x and delete {path} ({size} bytes)? [y/N] ").strip().lower()
+        answer = _ask(f"Overwrite 3x and delete {path} ({size} bytes)? [y/N] ").strip().lower()
     except EOFError:
         print("Aborted.")
         return
@@ -2956,7 +2972,7 @@ def cmd_quarantine(arguments):
         return
     pid, name = found
     try:
-        answer = input(f"Terminate {name} (pid {pid})? [y/N] ").strip().lower()
+        answer = _ask(f"Terminate {name} (pid {pid})? [y/N] ").strip().lower()
     except EOFError:
         print("Aborted.")
         return
@@ -2992,7 +3008,7 @@ def cmd_quarantine(arguments):
 @register("netcut", "Emergency: release all network addresses (y/N confirm)")
 def cmd_netcut(arguments):
     try:
-        answer = input("Release ALL network addresses (offline now, recover with 'netup')? [y/N] ").strip().lower()
+        answer = _ask("Release ALL network addresses (offline now, recover with 'netup')? [y/N] ").strip().lower()
     except EOFError:
         print("Aborted.")
         return
@@ -3127,7 +3143,7 @@ def cmd_scanmal(arguments):
 @register("lockdown", "Harden this machine - firewall on / guest off (y/N confirm)")
 def cmd_lockdown(arguments):
     try:
-        answer = input("Apply hardening (enable firewall, disable Guest)? [y/N] ").strip().lower()
+        answer = _ask("Apply hardening (enable firewall, disable Guest)? [y/N] ").strip().lower()
     except EOFError:
         print("Aborted.")
         return
@@ -3288,7 +3304,7 @@ def vulnscan(arguments):
     print("Active path probe: enumerates common sensitive paths (status codes")
     print("only, no payloads, no content read). This is the recon level used")
     print("on lab ranges such as DVWA, WebGoat or Pikachu.")
-    confirm = input("  Run path probe? Only on targets you own or are "
+    confirm = _ask("  Run path probe? Only on targets you own or are "
                     "authorized to test [y/N]: ")
     if confirm.strip().lower().startswith("y"):
         probe_paths = [
@@ -3662,5 +3678,438 @@ def cmd_protect(arguments):
     print("Advice: keep Defender real-time protection ON, firewall ON and")
     print("UAC enabled. Use 'scanmal' to scan for traces, 'lockdown' to")
     print("harden the machine, and 'guard on' for background monitoring.")
+
+
+# ---------- new command batch: text tools ----------
+
+@register("count", "Count characters and words in text")
+def count(arguments):
+    text = arguments
+    chars = len(text)
+    words = len(text.split())
+    print(f"Characters: {chars}")
+    print(f"Words     : {words}")
+
+
+@register("shuffle", "Shuffle the characters of text")
+def shuffle(arguments):
+    text = arguments
+    if not text:
+        print("Usage: shuffle <text>")
+        return
+    chars = list(text)
+    random.shuffle(chars)
+    print("".join(chars))
+
+
+@register("trim", "Trim spaces around text")
+def trim(arguments):
+    print(arguments.strip())
+
+
+@register("pad", "Pad text to a width")
+def pad(arguments):
+    parts = arguments.rsplit(None, 1)
+    if len(parts) == 2 and parts[1].isdigit():
+        text, width = parts[0], int(parts[1])
+    else:
+        text, width = arguments, 20
+    if width < 0:
+        width = 20
+    if len(text) < width:
+        text = text + " " * (width - len(text))
+    print(text)
+
+
+# ---------- new command batch: math tools ----------
+
+@register("fib", "Print the first N Fibonacci numbers")
+def fib(arguments):
+    n = _parse_int(arguments.strip(), 10)
+    if n <= 0:
+        print("Usage: fib <count>")
+        return
+    a, b = 0, 1
+    for _ in range(n):
+        print(a, end=" ")
+        a, b = b, a + b
+    print()
+
+
+@register("prime", "Check if a number is prime")
+def prime(arguments):
+    n = _parse_int(arguments.strip(), -1)
+    if n < 2:
+        print(f"{n} is not prime.")
+        return
+    for divisor in range(2, int(math.isqrt(n)) + 1):
+        if n % divisor == 0:
+            print(f"{n} is not prime (divisible by {divisor}).")
+            return
+    print(f"{n} is prime.")
+
+
+@register("pi", "Print Pi to N decimal places (max 15)")
+def pi(arguments):
+    text = arguments.strip()
+    try:
+        n = int(text) if text else 10
+    except ValueError:
+        n = 10
+    if n < 0 or n > 15:
+        print("Usage: pi <digits> (0-15)")
+        return
+    if n == 0:
+        print("3")
+        return
+    digits = str(math.floor(math.pi * 10 ** n))[1:]
+    print(f"3.{digits}")
+
+
+@register("fact", "Calculate the factorial of a number")
+def fact(arguments):
+    n = _parse_int(arguments.strip(), -1)
+    if n < 0 or n > 1000:
+        print("Usage: fact <n> (0-1000)")
+        return
+    result = 1
+    for i in range(2, n + 1):
+        result *= i
+    print(result)
+
+
+# ---------- new command batch: fun tools ----------
+
+@register("joke", "Tell a random joke")
+def joke(arguments):
+    jokes = [
+        "Why do hackers wear dark glasses? Because they can't C#.",
+        "There are 10 kinds of people: those who understand binary and those who don't.",
+        "A SQL query walks into a bar, sees two tables and asks: May I join you?",
+        "I would tell you a UDP joke, but you might not get it.",
+        "Why did the programmer quit his job? Because he didn't get arrays.",
+    ]
+    print(random.choice(jokes))
+
+
+@register("quote", "Show a random hacker quote")
+def quote(arguments):
+    quotes = [
+        "The computer is an incredibly fast idiot with an unbelievable memory.",
+        "In cyberspace, no one knows you are a dog. - Peter Steiner",
+        "Security is not a product, but a process. - Bruce Schneier",
+        "Any sufficiently advanced technology is indistinguishable from magic. - Arthur C. Clarke",
+        "Never trust a computer you can't throw out a window. - Steve Wozniak",
+    ]
+    print(random.choice(quotes))
+
+
+@register("facts", "Show a random hacker fact")
+def facts(arguments):
+    facts_list = [
+        "The first computer virus was created in 1971 and was called Creeper.",
+        "The term 'hacker' originally meant someone great at coding, not a criminal.",
+        "The first computer bug was literally a moth stuck in a relay of the Harvard Mark II.",
+        "CAPTCHA stands for Completely Automated Public Turing test to tell Computers and Humans Apart.",
+        "The QWERTY keyboard layout was not designed to slow typists down.",
+    ]
+    print(random.choice(facts_list))
+
+
+@register("randpw", "Generate a random password")
+def randpw(arguments):
+    length = _parse_int(arguments.strip(), 12)
+    if length < 4 or length > 64:
+        print("Usage: randpw <length> (4-64)")
+        return
+    pool = string.ascii_letters + string.digits + "!@#$%^&*"
+    print("".join(random.choice(pool) for _ in range(length)))
+
+
+# ---------- new command batch: animation tools ----------
+
+@register("spin", "Show a spinning animation for a few seconds")
+def spin(arguments):
+    frames = ["|", "/", "-", "\\"]
+    steps = _parse_int(arguments.strip(), 8)
+    steps = max(1, min(steps, 30))
+    for i in range(steps * 4):
+        print("\r" + frames[i % 4] + " spinning...", end="", flush=True)
+        _time.sleep(0.1)
+    print("\rDone spinning!          ")
+
+
+@register("progress", "Show a progress bar animation")
+def progress(arguments):
+    percent = _parse_int(arguments.strip(), 100)
+    percent = max(1, min(percent, 100))
+    for i in range(0, percent + 1, 5):
+        bar = "#" * (i // 2) + "-" * (50 - i // 2)
+        print(f"\r[{bar}] {i}%", end="", flush=True)
+        _time.sleep(0.05)
+    print()
+
+
+# ---------- new command batch: system tools ----------
+
+@register("path", "Show the system PATH entries")
+def path(arguments):
+    for index, entry in enumerate(os.environ.get("PATH", "").split(os.pathsep), 1):
+        print(f"{index:3d}  {entry}")
+
+
+# ---------- new command batch: file tools (Windows commands renamed) ----------
+
+@register("erase", "Delete a file (renamed del)")
+def erase(arguments):
+    target = _strip_quotes(arguments).strip()
+    if not target:
+        print("Usage: erase <file>")
+        return
+    path = Path(target).expanduser()
+    if not path.is_file():
+        print(f"File not found: {path}")
+        return
+    answer = _ask(f"Erase {path.name}? [y/N] ").strip().lower()
+    if answer not in ("y", "yes"):
+        print("Aborted.")
+        return
+    try:
+        path.unlink()
+    except OSError as error:
+        print(f"Could not erase: {error}")
+        return
+    print(f"Erased: {path}")
+
+
+@register("delfolder", "Delete an empty folder (renamed rd)")
+def delfolder(arguments):
+    target = _strip_quotes(arguments).strip()
+    if not target:
+        print("Usage: delfolder <folder>")
+        return
+    path = Path(target).expanduser()
+    if not path.is_dir():
+        print(f"Folder not found: {path}")
+        return
+    answer = _ask(f"Remove empty folder {path.name}? [y/N] ").strip().lower()
+    if answer not in ("y", "yes"):
+        print("Aborted.")
+        return
+    try:
+        path.rmdir()
+    except OSError as error:
+        print(f"Folder not empty or in use: {error}")
+        return
+    print(f"Removed: {path}")
+
+
+@register("attribf", "Show file attributes (renamed attrib)")
+def attribf(arguments):
+    target = _strip_quotes(arguments).strip()
+    if not target:
+        print("Usage: attribf <path>")
+        return
+    path = Path(target).expanduser()
+    if not path.exists():
+        print(f"Not found: {path}")
+        return
+    attrs = ctypes.windll.kernel32.GetFileAttributesW(str(path.resolve()))
+    if attrs == 0xFFFFFFFF:
+        print("Could not read attributes.")
+        return
+    flags = []
+    if attrs & 0x1:
+        flags.append("READONLY")
+    if attrs & 0x2:
+        flags.append("HIDDEN")
+    if attrs & 0x4:
+        flags.append("SYSTEM")
+    if attrs & 0x10:
+        flags.append("DIRECTORY")
+    if attrs & 0x20:
+        flags.append("ARCHIVE")
+    if not flags:
+        flags.append("NORMAL")
+    print(f"{path.name}: {' '.join(flags)}")
+
+
+# ---------- new command batch: system tools ----------
+
+@register("poweroff", "Shut down the computer (confirmed)")
+def poweroff(arguments):
+    answer = _ask("Shut down the computer now? [y/N] ").strip().lower()
+    if answer not in ("y", "yes"):
+        print("Aborted.")
+        return
+    os.system("shutdown /s /t 3")
+    print("Shutting down in 3 seconds...")
+
+
+@register("reboot", "Restart the computer (confirmed)")
+def reboot(arguments):
+    answer = _ask("Restart the computer now? [y/N] ").strip().lower()
+    if answer not in ("y", "yes"):
+        print("Aborted.")
+        return
+    os.system("shutdown /r /t 3")
+    print("Restarting in 3 seconds...")
+
+
+@register("lockpc", "Lock the workstation")
+def lockpc(arguments):
+    try:
+        ctypes.windll.user32.LockWorkStation()
+    except Exception as error:
+        print(f"Could not lock: {error}")
+
+
+# ---------- new command batch: network tools ----------
+
+@register("weather", "Show weather for a city (wttr.in)")
+def weather(arguments):
+    city = _strip_quotes(arguments).strip() or "Suzhou"
+    try:
+        url = "https://wttr.in/" + urllib.parse.quote(city) + "?format=3&lang=zh"
+        with urllib.request.urlopen(url, timeout=10) as resp:
+            print(resp.read().decode("utf-8", errors="replace").strip())
+    except Exception as error:
+        print(f"Weather lookup failed: {type(error).__name__}")
+
+
+# ---------- new command batch: utility tools ----------
+
+@register("typingtest", "Typing speed test")
+def typingtest(arguments):
+    sample = ("The quick brown fox jumps over the lazy dog while hackers "
+              "watch the terminal scroll in green.")
+    print("Type this line:")
+    print(colors.green(sample))
+    start = _time.time()
+    typed = _ask("> ")
+    elapsed = max(0.1, _time.time() - start)
+    matched = sum(1 for a, b in zip(sample, typed) if a == b)
+    wpm = int((matched / 5) / (elapsed / 60))
+    print(f"Time: {elapsed:.1f}s | Correct: {matched}/{len(sample)} "
+          f"| Speed: {wpm} WPM")
+
+
+@register("pwstrength", "Check password strength")
+def pwstrength(arguments):
+    pwd = arguments
+    if not pwd:
+        print("Usage: pwstrength <password>")
+        return
+    score = 0
+    reasons = []
+    if len(pwd) >= 8:
+        score += 1
+        reasons.append("length >= 8")
+    if re.search(r"[a-z]", pwd) and re.search(r"[A-Z]", pwd):
+        score += 1
+        reasons.append("mixed case")
+    if re.search(r"\d", pwd):
+        score += 1
+        reasons.append("has digits")
+    if re.search(r"[^A-Za-z0-9]", pwd):
+        score += 1
+        reasons.append("has symbols")
+    level = ["very weak", "weak", "fair", "strong", "very strong"][score]
+    print(f"Score: {score}/4 ({level})")
+    if reasons:
+        print("Good:", ", ".join(reasons))
+    if score < 3:
+        print("Tip: use 8+ chars with upper/lower, digits and symbols.")
+
+
+@register("ts", "Show the current Unix timestamp")
+def ts(arguments):
+    print(int(_time.time()))
+
+
+@register("date2ts", "Convert a date to a timestamp (YYYY-MM-DD [HH:MM])")
+def date2ts(arguments):
+    text = _strip_quotes(arguments).strip()
+    if not text:
+        print("Usage: date2ts <YYYY-MM-DD [HH:MM]>")
+        return
+    for fmt in ("%Y-%m-%d %H:%M", "%Y-%m-%d"):
+        try:
+            dt = datetime.datetime.strptime(text, fmt)
+            print(int(dt.timestamp()))
+            return
+        except ValueError:
+            continue
+    print("Invalid date. Use YYYY-MM-DD or YYYY-MM-DD HH:MM")
+
+
+@register("ascii", "Show ASCII codes of text characters")
+def ascii_cmd(arguments):
+    text = arguments
+    if not text:
+        print("Usage: ascii <text>")
+        return
+    for ch in text:
+        print(f"{ch!r}: {ord(ch)}")
+
+
+@register("chr", "Show the character for an ASCII/Unicode code")
+def chr_cmd(arguments):
+    code = _parse_int(arguments.strip(), -1)
+    if code < 0 or code > 0x10FFFF:
+        print("Usage: chr <code>")
+        return
+    print(chr(code))
+
+
+@register("dac", "DAC package system (.dac files)")
+def dac(arguments):
+    import dac as dac_module
+    dac_module.handle(arguments)
+
+
+@register("wsl", "Run a Linux command via WSL, or enter a WSL session")
+def wsl(arguments):
+    import shlex
+    import shutil
+    import subprocess
+    wsl_exe = shutil.which("wsl.exe")
+    if not wsl_exe:
+        print("WSL is not installed. Enable it with: wsl --install")
+        return
+
+    def run_linux(command):
+        try:
+            subprocess.run([wsl_exe] + shlex.split(command), timeout=180)
+        except subprocess.TimeoutExpired:
+            print("WSL command timed out (180s).")
+        except Exception as error:
+            print(f"WSL error: {type(error).__name__}: {error}")
+
+    cmd = arguments.strip()
+    if not cmd:
+        try:
+            proc = subprocess.run([wsl_exe, "--list", "--verbose"],
+                                  capture_output=True, text=True, timeout=15,
+                                  errors="replace")
+            print((proc.stdout or proc.stderr).strip() or "WSL installed.")
+        except Exception as error:
+            print(f"WSL error: {type(error).__name__}: {error}")
+            return
+        print("Entering WSL session. Type 'exit' to leave.")
+        while True:
+            try:
+                line = input("wsl:~$ ")
+            except (EOFError, KeyboardInterrupt):
+                print()
+                break
+            if not line.strip():
+                continue
+            if line.strip().lower() in ("exit", "quit", "logout"):
+                print("Leaving WSL session.")
+                break
+            run_linux(line)
+        return
+    run_linux(cmd)
 
 

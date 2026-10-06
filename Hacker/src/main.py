@@ -57,24 +57,17 @@ os.system('color 0A')
 os.system('title Hacker Tool')
 if SCRIPT_FILE:
     if os.path.isfile(SCRIPT_FILE):
-        import hacklib
         import h as hacker_h
         try:
             source = open(SCRIPT_FILE, encoding="utf-8", errors="replace").read()
         except OSError as error:
             print(f"Cannot read script: {error}")
-            SCRIPT_FILE = ""
         else:
-            namespace = dict(hacklib.HACKLIB)
-            namespace.update(hacker_h._RUN_NAMESPACE)
-            namespace.update({"__name__": "__main__", "args": [], "argc": 0})
             print(f"Running {os.path.basename(SCRIPT_FILE)} ...")
             try:
-                exec(compile(source, SCRIPT_FILE, "exec"), namespace)
-            except SystemExit:
-                pass
-            except Exception as error:
-                print(f"Script error: {type(error).__name__}: {error}")
+                hacker_h.execute_lines(source.splitlines(), display_prefix=False)
+            except KeyboardInterrupt:
+                print("^C Script interrupted.")
             print()
     else:
         print(f"Script not found: {SCRIPT_FILE}")

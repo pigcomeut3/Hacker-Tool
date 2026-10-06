@@ -121,6 +121,10 @@
    'C:\\Users\\Xiaozhu\\AppData\\Local\\Doubao\\User '
    'Data\\sandbox_runtime\\bases\\c98c5042338ed152c6f10ecd8591889f\\python\\DLLs\\_queue.pyd',
    'EXTENSION'),
+  ('winsound.pyd',
+   'C:\\Users\\Xiaozhu\\AppData\\Local\\Doubao\\User '
+   'Data\\sandbox_runtime\\bases\\c98c5042338ed152c6f10ecd8591889f\\python\\DLLs\\winsound.pyd',
+   'EXTENSION'),
   ('_uuid.pyd',
    'C:\\Users\\Xiaozhu\\AppData\\Local\\Doubao\\User '
    'Data\\sandbox_runtime\\bases\\c98c5042338ed152c6f10ecd8591889f\\python\\DLLs\\_uuid.pyd',
@@ -128,10 +132,6 @@
   ('_wmi.pyd',
    'C:\\Users\\Xiaozhu\\AppData\\Local\\Doubao\\User '
    'Data\\sandbox_runtime\\bases\\c98c5042338ed152c6f10ecd8591889f\\python\\DLLs\\_wmi.pyd',
-   'EXTENSION'),
-  ('winsound.pyd',
-   'C:\\Users\\Xiaozhu\\AppData\\Local\\Doubao\\User '
-   'Data\\sandbox_runtime\\bases\\c98c5042338ed152c6f10ecd8591889f\\python\\DLLs\\winsound.pyd',
    'EXTENSION'),
   ('_ctypes.pyd',
    'C:\\Users\\Xiaozhu\\AppData\\Local\\Doubao\\User '
@@ -182,7 +182,7 @@
  [],
  False,
  False,
- 1791178016,
+ 1791196946,
  [('run.exe',
    'C:\\Users\\Xiaozhu\\AppData\\Local\\Doubao\\User '
    'Data\\sandbox_runtime\\bases\\c98c5042338ed152c6f10ecd8591889f\\python\\Lib\\site-packages\\PyInstaller\\bootloader\\Windows-64bit-intel\\run.exe',

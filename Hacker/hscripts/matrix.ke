@@ -1,8 +1,5 @@
-# matrix.ke - sample Hacker script
-# Run with:  h matrix.ke
-import random
-import time
-for row in range(8):
-    print("".join(random.choice("01") for _ in range(16)))
-    time.sleep(0.3)
-print("Wake up, Neo...")
+# matrix.ke - Hacker script
+# Run it with: h run matrix
+
+matrix 4
+quote

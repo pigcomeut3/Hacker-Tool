@@ -1,0 +1,3 @@
+# testpkg info.ke - sub-command
+echo DAC info sub-command works
+facts

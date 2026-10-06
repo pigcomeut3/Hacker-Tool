@@ -1,0 +1,3 @@
+# testpkg main.ke - DAC package entry
+echo Hello from DAC package!
+sysinfo

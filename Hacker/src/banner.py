@@ -19,6 +19,4 @@ def show():
     for line in ART:
         print(colors.green(line))
     print(colors.cyan("└" + "─" * WIDTH + "┘"))
-    print(colors.dim("  Custom terminal for Windows · 130 commands · "
-                     "type 'help' for the full list"))
     print()
